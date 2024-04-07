@@ -3,13 +3,18 @@
 #![feature(panic_info_message)]
 
 mod lang_items;
+mod config;
 mod drivers;
 mod io;
 mod time;
+mod mm;
 
-use core::arch::global_asm;
-use core::arch::asm;
-use crate::drivers::uart::UART;
+extern crate alloc;
+
+use core::arch::{global_asm, asm};
+use mm::kernel_heap::init_kernel_heap;
+use mm::frame_allocator::init_frame_allocator;
+use drivers::uart::UART;
 use riscv::register::*;
 use time::init_timer;
 
@@ -43,6 +48,14 @@ pub unsafe fn rust_start() -> ! {
 extern "C" fn rust_main() {
     clear_bss();
     UART.init();
+    println!("UART initilized.");
+
+    init_kernel_heap();
+    println!("Kernel heap allocator initilized.");
+
+    init_frame_allocator()
+    println!("Frame allocator initilized.");
+
     println!("Hello, World!");
     panic!("test!");
     loop {}
