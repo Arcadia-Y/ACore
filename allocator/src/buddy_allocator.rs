@@ -48,7 +48,7 @@ impl BuddyAllocator {
         start = (start + unit_space - 1) & !(unit_space - 1);
         end &= !(unit_space - 1);
         while start < end {
-            let i = (end - start).trailing_zeros() as usize;
+            let i = min((end - start).ilog2(), start.trailing_zeros()) as usize;
             self.free_blocks[i].push(start as *mut usize);
             start += 1 << i;
         }
