@@ -59,6 +59,10 @@ impl PageTable {
         }
     }
 
+    pub fn get_satp(&self) -> usize {
+        self.root_ppn.0 | (8 << 60) // set MODE = 8 for SV39
+    }
+
     pub fn map(&self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
         let pte = self.create_pte(vpn);
         *pte = PageTableEntry::new(ppn, flags);
@@ -68,7 +72,7 @@ impl PageTable {
         if let Some(pte) = self.find_pte(vpn) {
             *pte = PageTableEntry::empty();
         } else {
-            panic!("The vpn:{} is not valid when unmapping", vpn.0);
+            panic!("[page table] The vpn:{} is not valid when unmapping", vpn.0);
         }
     }
 
@@ -111,7 +115,7 @@ impl PageTable {
 
 // used for kernel to access user's page
 impl PageTable {
-    pub fn from_token(satp: usize) -> Self{
+    pub fn from_satp(satp: usize) -> Self{
         Self {
             root_ppn: PhysPageNum::from(satp & ((1usize << 44) - 1)),
             frames: SpinLock::new(Vec::new())

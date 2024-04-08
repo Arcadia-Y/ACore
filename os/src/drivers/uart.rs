@@ -1,6 +1,7 @@
 use core::sync::atomic::{AtomicU8, Ordering};
 use volatile::Volatile;
 use lazy_static::lazy_static;
+use crate::config::UART_BASE;
 
 macro_rules! wait_till {
     ($cond:expr) => {
@@ -10,7 +11,7 @@ macro_rules! wait_till {
     };
 }
 
-const UART_BASE: usize = 0x10000000;
+
 lazy_static! {
     pub static ref UART: Uart = unsafe { Uart::new(UART_BASE) };
 }

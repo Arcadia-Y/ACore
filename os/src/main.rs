@@ -17,6 +17,7 @@ use mm::frame_allocator::init_frame_allocator;
 use drivers::uart::UART;
 use riscv::register::*;
 use time::init_timer;
+use crate::mm::address_space::set_up_page_table;
 
 global_asm!(include_str!("entry.asm"));
 
@@ -55,6 +56,9 @@ extern "C" fn rust_main() {
 
     init_frame_allocator();
     println!("Frame allocator initilized.");
+
+    set_up_page_table();
+    println!("Kernel page table set up.");
 
     println!("Hello, World!");
     panic!("test!");

@@ -1,9 +1,8 @@
 use core::arch::global_asm;
 use core::ptr::addr_of_mut;
 use riscv::register::*;
+use crate::config::{MTIME, MTIMECMP};
 
-const MTIME: usize = 0x0200bff8;
-const MTIMECMP: usize = 0x02004000;
 const TIME_INTERVAL : usize = 1000000;
 
 global_asm!(include_str!("timer_trap.s"));

@@ -1,7 +1,7 @@
 // Implementation of physical and virtual address
-
 use crate::config::*;
 use super::page_table::PageTableEntry;
+use super::range::Step;
 
 const PA_WIDTH: usize = 56;
 const VA_WIDTH: usize = 39;
@@ -113,5 +113,11 @@ impl VirtPageNum {
             vpn >>= 9;
         }
         res
+    }
+}
+
+impl Step for VirtPageNum {
+    fn step(&mut self) {
+        self.0 += 1;
     }
 }
