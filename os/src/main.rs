@@ -53,12 +53,11 @@ extern "C" fn rust_main() {
     init_kernel_heap();
     println!("Kernel heap allocator initilized.");
 
-    init_frame_allocator()
+    init_frame_allocator();
     println!("Frame allocator initilized.");
 
     println!("Hello, World!");
     panic!("test!");
-    loop {}
 }
 
 fn clear_bss() {

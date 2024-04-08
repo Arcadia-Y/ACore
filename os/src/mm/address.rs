@@ -1,6 +1,7 @@
 // Implementation of physical and virtual address
 
 use crate::config::*;
+use super::page_table::PageTableEntry;
 
 const PA_WIDTH: usize = 56;
 const VA_WIDTH: usize = 39;
@@ -94,5 +95,23 @@ impl PhysPageNum {
     pub fn get_bytes_array(&self) -> &'static mut [u8] {
         let pa: PhysAddr = self.to_addr();
         unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut u8, 4096) }
+    }
+    pub fn get_pte_array(&self) -> &'static mut [PageTableEntry] {
+        let pa: PhysAddr = self.to_addr();
+        unsafe {
+            core::slice::from_raw_parts_mut(pa.0 as *mut PageTableEntry, 512)
+        }
+    }
+}
+
+impl VirtPageNum {
+    pub fn get_index(&self) -> [usize; 3] {
+        let mut vpn = self.0;
+        let mut res = [0usize; 3];
+        for i in 0..3 {
+            res[i] = vpn & 0x1ff;
+            vpn >>= 9;
+        }
+        res
     }
 }
