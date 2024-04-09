@@ -86,6 +86,9 @@ impl VirtAddr {
     pub fn ceil(&self) -> VirtPageNum {
         VirtPageNum((self.0 + PAGE_SIZE - 1) >> PAGE_SIZE_BITS)
     }
+    pub fn offset(&self) -> usize {
+        self.0 & (PAGE_SIZE - 1)
+    }
 }
 
 impl PhysPageNum {
@@ -108,7 +111,7 @@ impl VirtPageNum {
     pub fn get_index(&self) -> [usize; 3] {
         let mut vpn = self.0;
         let mut res = [0usize; 3];
-        for i in 0..3 {
+        for i in (0..3).rev() {
             res[i] = vpn & 0x1ff;
             vpn >>= 9;
         }

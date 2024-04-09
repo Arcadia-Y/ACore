@@ -2,7 +2,7 @@ use core::arch::asm;
 
 use alloc::{collections::BTreeMap, vec::Vec};
 use lazy_static::*;
-use crate::config::*;
+use crate::{config::*, println};
 
 use super::{address::{PhysPageNum, VirtAddr, VirtPageNum}, frame_allocator::{frame_alloc, FrameTracker}, page_table::{PTEFlags, PageTable}, range::Range};
 
@@ -24,15 +24,17 @@ lazy_static! {
 
 pub fn set_up_page_table() {
     // note that KERNEL_SPACE has been initialized due to lazy_static
-    let satp = KERNEL_SPACE.get_satp();
-    riscv::register::satp::write(satp);
+    let table = &KERNEL_SPACE.root_table;
+    let satp = table.get_satp();
+    println!("Ready to write satp.");
     unsafe {
+        riscv::register::satp::write(satp);
         asm!("sfence.vma");
     }
 }
 
 pub struct AddrSpace {
-    root_table: PageTable,
+    pub root_table: PageTable,
     areas: Vec<MapArea>,
 }
 
@@ -50,10 +52,6 @@ impl AddrSpace {
             area.copy_from_bytes(data);
         }
         self.areas.push(area);
-    }
-
-    pub fn get_satp(&self) -> usize {
-        self.root_table.get_satp()
     }
 
     pub fn new_kernel() -> Self {
@@ -164,7 +162,7 @@ impl MapArea {
 
     pub fn map_one(&mut self, table: &mut PageTable, vpn: VirtPageNum) {
         let ppn = match self.map_type {
-            MapType::Identical => vpn.0.into(),
+            MapType::Identical => PhysPageNum(vpn.0),
             MapType::Framed => {
                 let frame = frame_alloc();
                 let res = frame.ppn;
@@ -200,7 +198,7 @@ impl MapArea {
         if self.map_type == MapType::Identical {
             for vpn in self.range.iter() {
                 let src = &data[head..len.min(head + PAGE_SIZE)];
-                let ppn: PhysPageNum = vpn.0.into();
+                let ppn: PhysPageNum = PhysPageNum(vpn.0);
                 let dst = ppn.get_bytes_array();
                 dst.copy_from_slice(src);
                 head += PAGE_SIZE;

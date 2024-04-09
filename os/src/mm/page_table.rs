@@ -2,6 +2,8 @@ use alloc::vec:: Vec;
 use alloc::vec;
 use bitflags::*;
 use spin::SpinLock;
+use crate::config::PAGE_SIZE;
+
 use super::{address::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum}, frame_allocator::{frame_alloc, FrameTracker}};
 
 bitflags! {
@@ -59,13 +61,14 @@ impl PageTable {
         }
     }
 
-    pub fn get_satp(&self) -> usize {
-        self.root_ppn.0 | (8 << 60) // set MODE = 8 for SV39
+    pub fn  get_satp(&self) -> usize {
+        self.root_ppn.0 | (8usize << 60) // set MODE = 8 for SV39
     }
 
+    // NOTICE that map() ensures that the mapped pte is valid
     pub fn map(&self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
         let pte = self.create_pte(vpn);
-        *pte = PageTableEntry::new(ppn, flags);
+        *pte = PageTableEntry::new(ppn, flags | PTEFlags::V);
     }
 
     pub fn unmap(&self, vpn: VirtPageNum) {
@@ -95,7 +98,8 @@ impl PageTable {
         unreachable!();
     }
 
-    // find vpn's pte, return none if it's invalid
+    // find vpn's pte, return none if its page table is invalid
+    // however even if !pte.is_valid() we still return Some(pte)
     fn find_pte(&self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
         let index = vpn.get_index();
         let mut ppn = self.root_ppn;
@@ -122,8 +126,21 @@ impl PageTable {
         }
     }
 
-    pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
+    pub fn translate_vpn(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.find_pte(vpn)
             .map(|pte| {pte.clone()})
+    }
+
+    pub fn traslate_va(&self, va: VirtAddr) -> Option<PhysAddr> {
+        if let Some(pte) = self.translate_vpn(va.floor()) {
+            if !pte.is_valid() {
+                return None;
+            }
+            let ppn = pte.ppn();
+            let offset = va.offset();
+            Some(PhysAddr(ppn.0 * PAGE_SIZE + offset))
+        } else {
+            None
+        }
     }
 }
