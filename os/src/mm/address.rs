@@ -105,9 +105,16 @@ impl PhysPageNum {
             core::slice::from_raw_parts_mut(pa.0 as *mut PageTableEntry, 512)
         }
     }
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        let pa: PhysAddr = (*self).to_addr();
+        unsafe { (pa.0 as *mut T).as_mut().unwrap() }
+    }
 }
 
 impl VirtPageNum {
+    pub fn to_addr(&self) -> VirtAddr {
+        VirtAddr(self.0 << PAGE_SIZE_BITS)
+    }
     pub fn get_index(&self) -> [usize; 3] {
         let mut vpn = self.0;
         let mut res = [0usize; 3];

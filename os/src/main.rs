@@ -8,6 +8,10 @@ mod drivers;
 mod io;
 mod time;
 mod mm;
+mod trap;
+mod task;
+mod loader;
+mod syscall;
 
 extern crate alloc;
 
@@ -18,8 +22,10 @@ use drivers::uart::UART;
 use riscv::register::*;
 use time::init_timer;
 use crate::mm::address_space::set_up_page_table;
+use crate::task::run_first_task;
 
 global_asm!(include_str!("entry.asm"));
+global_asm!(include_str!("link_app.S"));
 
 // initialize, from M-mode to S-mode
 #[no_mangle]
@@ -46,7 +52,7 @@ pub unsafe fn rust_start() -> ! {
 }
 
 #[no_mangle]
-extern "C" fn rust_main() {
+extern "C" fn rust_main() -> !{
     clear_bss();
     UART.init();
     println!("UART initilized.");
@@ -60,8 +66,8 @@ extern "C" fn rust_main() {
     set_up_page_table();
     println!("Kernel page table set up.");
 
-    println!("Hello, World!");
-    panic!("test!");
+    run_first_task();
+    unreachable!()
 }
 
 fn clear_bss() {

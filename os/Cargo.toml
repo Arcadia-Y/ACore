@@ -10,6 +10,7 @@ riscv = { git = "https://github.com/rcore-os/riscv", features = ["inline-asm"] }
 allocator = { path = "../allocator" }
 spin = { path = "../spin" }
 bitflags = "1.2.1"
+xmas-elf = "0.7.0"
 
 [profile.release]
 debug = true

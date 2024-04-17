@@ -1,5 +1,5 @@
 use core::panic::PanicInfo;
-use crate::println;
+use crate::{drivers::shutdown, println};
 
 
 #[panic_handler]
@@ -14,5 +14,6 @@ fn panic(info: &PanicInfo) -> ! {
     } else {
         println!("Panicked: {}", info.message().unwrap());
     }
+    shutdown();
     loop{}
 }

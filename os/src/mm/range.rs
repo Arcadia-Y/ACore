@@ -8,8 +8,8 @@ pub struct Range<T>
 where
     T: Copy + Eq + Step,
 {
-    start: T,
-    end: T,
+    pub start: T,
+    pub end: T,
 }
 
 pub struct RangeIterator<T> {
