@@ -1,7 +1,7 @@
 use alloc::vec:: Vec;
 use alloc::vec;
 use bitflags::*;
-use spin::SpinLock;
+use core::cmp::min;
 use crate::config::PAGE_SIZE;
 
 use super::{address::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum}, frame_allocator::{frame_alloc, FrameTracker}};
@@ -49,7 +49,7 @@ impl PageTableEntry {
 
 pub struct PageTable {
     root_ppn: PhysPageNum,
-    frames: SpinLock<Vec<FrameTracker>> 
+    frames: Vec<FrameTracker> 
 }
 
 impl PageTable {
@@ -57,7 +57,7 @@ impl PageTable {
         let root_frame = frame_alloc();
         Self {
             root_ppn: root_frame.ppn,
-            frames: SpinLock::new(vec![root_frame])
+            frames: vec![root_frame]
         }
     }
 
@@ -65,8 +65,8 @@ impl PageTable {
         self.root_ppn.0 | (8usize << 60) // set MODE = 8 for SV39
     }
 
-    // NOTICE that map() ensures that the mapped pte is valid
-    pub fn map(&self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
+    // NOTE that map() ensures that the mapped pte is valid
+    pub fn map(&mut self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
         let pte = self.create_pte(vpn);
         *pte = PageTableEntry::new(ppn, flags | PTEFlags::V);
     }
@@ -80,7 +80,7 @@ impl PageTable {
     }
 
     // find vpn's pte, create new pages if necessary
-    fn create_pte(&self, vpn: VirtPageNum) -> &mut PageTableEntry {
+    fn create_pte(&mut self, vpn: VirtPageNum) -> &mut PageTableEntry {
         let index = vpn.get_index();
         let mut ppn = self.root_ppn;
         for i in 0..3 {
@@ -91,7 +91,7 @@ impl PageTable {
             if !pte.is_valid() {
                 let frame = frame_alloc();
                 *pte = PageTableEntry::new(frame.ppn, PTEFlags::V);
-                self.frames.lock().push(frame);
+                self.frames.push(frame);
             }
             ppn = pte.ppn();
         }
@@ -122,7 +122,7 @@ impl PageTable {
     pub fn from_satp(satp: usize) -> Self{
         Self {
             root_ppn: PhysPageNum::from(satp & ((1usize << 44) - 1)),
-            frames: SpinLock::new(Vec::new())
+            frames: Vec::new()
         }
     }
 
@@ -143,4 +143,24 @@ impl PageTable {
             None
         }
     }
+}
+
+pub fn get_user_byte_buffer(satp: usize, ptr: *const u8, len: usize) -> Vec<u8> {
+    let mut res = Vec::new();
+    let mut start = ptr as usize;
+    let end = start + len;
+    let page_table = PageTable::from_satp(satp);
+    while start < end {
+        let strat_va = VirtAddr(start);
+        let vpn = strat_va.floor();
+        let ppn = page_table.translate_vpn(vpn).unwrap().ppn();
+        let offset = strat_va.offset();
+        let amount = min(end - start, PAGE_SIZE - offset);
+        let bytes = ppn.get_bytes_array();
+        for byte in bytes[offset..offset + amount].iter() {
+            res.push(*byte);
+        }
+        start += amount;
+    }
+    res
 }
