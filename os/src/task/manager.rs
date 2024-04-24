@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
 use spin::SpinLock;
-use crate::{drivers::shutdown, println, trap::{context::TrapContext, trap_return}};
+use crate::{config::TIME_INTERVAL, drivers::shutdown, println, time::{get_time, set_timer}, trap::{context::TrapContext, trap_return}};
 
 use super::{context::TaskContext, task::{TaskControlBlock, TaskStatus}};
 
@@ -47,7 +47,7 @@ impl TaskManager {
         unreachable!();
     }
 
-    pub fn find_next_task(&self) -> Option<usize> {
+    pub fn find_next_task(&self, current_state: TaskStatus) -> Option<usize> {
         let inner = self.inner.lock();
         let current = inner.current;
         let mut next = (current + 1) % self.app_num;
@@ -57,7 +57,11 @@ impl TaskManager {
             }
             next = (next + 1) % self.app_num;
         }
-        None
+        if current_state == TaskStatus::Ready {
+            Some(current)
+        } else {
+            None
+        }
     }
 
     pub fn mark_current(&self, status: TaskStatus) {
@@ -66,8 +70,8 @@ impl TaskManager {
         inner.tasks[current].task_status = status;
     }
 
-    pub fn run_next_task(&self) {
-        if let Some(next ) = self.find_next_task() {
+    pub fn run_next_task(&self, current_state: TaskStatus) {
+        if let Some(next ) = self.find_next_task(current_state) {
             let mut inner = self.inner.lock();
             inner.tasks[next].task_status = TaskStatus::Running;
             let current = inner.current;
@@ -75,6 +79,7 @@ impl TaskManager {
             let current_cx = &mut inner.tasks[current].task_cx as *mut TaskContext;
             let next_cx = & inner.tasks[next].task_cx as *const TaskContext;
             drop(inner);
+            set_timer(get_time() + TIME_INTERVAL);
             unsafe {
                 __switch(current_cx, next_cx);
             }

@@ -16,7 +16,7 @@ _timer_trap:
     sd t2, 0(t0)
 
     # setup sip
-    li t0, 2
+    li t0, 32
     csrw sip, t0
 
     ld t0, 0(sp)

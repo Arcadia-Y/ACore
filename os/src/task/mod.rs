@@ -28,12 +28,12 @@ pub fn run_first_task() {
 
 pub fn exit_current_and_run_next() {
     TASK_MANAGER.mark_current(TaskStatus::Exit);
-    TASK_MANAGER.run_next_task();
+    TASK_MANAGER.run_next_task(TaskStatus::Exit);
 }
 
 pub fn suspend_current_and_run_next() {
     TASK_MANAGER.mark_current(TaskStatus::Ready);
-    TASK_MANAGER.run_next_task();
+    TASK_MANAGER.run_next_task(TaskStatus::Ready);
 }
 
 pub fn current_user_satp() -> usize {

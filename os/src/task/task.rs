@@ -32,9 +32,12 @@ impl TaskControlBlock {
         // set up kernel stack
         let (kernel_stack_bottom, kernel_stack_top) = kernel_stack_pos(app_id);
         let mut kernel_space = KERNEL_SPACE.lock();
-        kernel_space.push(MapArea::new(VirtAddr(kernel_stack_bottom),
-        VirtAddr(kernel_stack_top), MapType::Framed, 
-        PTEFlags::R | PTEFlags::W), None);
+        kernel_space.push(
+            MapArea::new(VirtAddr(kernel_stack_bottom),
+            VirtAddr(kernel_stack_top), MapType::Framed, 
+            PTEFlags::R | PTEFlags::W), 
+            None
+        );
         let control_block = Self{
             task_status,
             task_cx: TaskContext::new(trap_return as usize, kernel_stack_top),

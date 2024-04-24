@@ -1,7 +1,7 @@
 use core::arch::{asm, global_asm};
 
-use riscv::register::{scause::{self, Exception, Trap}, stval, stvec, utvec::TrapMode};
-use crate::{config::{TRAMPOLINE_ADDR, TRAP_CONTEXT}, println, syscall::syscall, task::{current_trap_cx, current_user_satp}};
+use riscv::register::{scause::{self, Exception, Interrupt, Trap}, stval, stvec, utvec::TrapMode};
+use crate::{config::{TRAMPOLINE_ADDR, TRAP_CONTEXT}, println, syscall::syscall, task::{current_trap_cx, current_user_satp, suspend_current_and_run_next}, time::{get_mtime_cmp, get_time}};
 pub mod context;
 
 global_asm!(include_str!("trap.S"));
@@ -25,6 +25,13 @@ pub fn trap_handler() -> ! {
             cx.sepc += 4;
             // syscall id in a0, args in a1-a3
             cx.x[10] = syscall(cx.x[10], [cx.x[11], cx.x[12], cx.x[13]]) as usize;
+            if get_time() > get_mtime_cmp() {
+                suspend_current_and_run_next();
+            }
+        }
+        Trap::Interrupt(Interrupt::SupervisorTimer) => {
+            cx.sepc += 4;
+            suspend_current_and_run_next();
         }
         _ => {
             panic!(

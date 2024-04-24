@@ -1,9 +1,7 @@
 use core::arch::global_asm;
 use core::ptr::addr_of_mut;
 use riscv::register::*;
-use crate::config::{MTIME, MTIMECMP};
-
-const TIME_INTERVAL : usize = 1000000;
+use crate::config::{MTIMECMP, TIME_INTERVAL};
 
 global_asm!(include_str!("timer_trap.s"));
 
@@ -14,11 +12,13 @@ pub fn set_timer(time: usize) {
     }
 }
 
+pub fn get_mtime_cmp() -> usize {
+    let cmp = MTIMECMP as *const usize;
+    unsafe { *cmp }
+}
+
 pub fn get_time() -> usize {
-    unsafe {
-        let time = MTIME as *const usize;
-        time.read_volatile()
-    }
+    time::read()
 }
 
 #[link_section = ".bss.stack"]
@@ -41,7 +41,6 @@ pub unsafe fn init_timer() {
         fn _timer_trap();
     }
     mtvec::write(_timer_trap as usize, mtvec::TrapMode::Direct);
-
     mstatus::set_mie();
     mie::set_mtimer();
 }

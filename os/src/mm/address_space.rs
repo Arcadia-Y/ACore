@@ -134,14 +134,6 @@ impl AddrSpace {
         // map timer port
         ret.push( 
             MapArea::new(
-                MTIME.into(), 
-                (MTIME+1).into(), 
-                MapType::Identical,
-                PTEFlags::R | PTEFlags::W),
-            None
-        );
-        ret.push( 
-            MapArea::new(
                 MTIMECMP.into(), 
                 (MTIMECMP+1).into(), 
                 MapType::Identical,
