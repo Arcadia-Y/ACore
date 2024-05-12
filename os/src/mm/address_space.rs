@@ -1,11 +1,11 @@
 use core::arch::asm;
 
-use alloc::{collections::BTreeMap, sync::Arc, vec::Vec};
+use alloc::{collections::BTreeMap, vec::Vec};
 use lazy_static::*;
 use spin::SpinLock;
 use crate::{config::*, println};
 
-use super::{address::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum}, frame_allocator::{frame_alloc, FrameTracker}, page_table::{PTEFlags, PageTable}, range::Range};
+use super::{address::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum}, frame_allocator::{frame_alloc, FrameTracker}, page_table::{PTEFlags, PageTable, PageTableEntry}, range::Range};
 
 extern "C" {
     fn stext();
@@ -62,6 +62,19 @@ impl AddrSpace {
             area.copy_from_bytes(data);
         }
         self.areas.push(area);
+    }
+
+    // remove MapArea starting from start_vpn
+    pub fn remove_area(&mut self, start_vpn: VirtPageNum) {
+        if let Some((i, area)) = self
+            .areas
+            .iter_mut()
+            .enumerate()
+            .find(|(_, x)| x.range.start == start_vpn)
+        {
+            area.unmap(&mut self.root_table);
+            self.areas.remove(i);
+        }
     }
 
     pub fn new_kernel() -> Self {
@@ -206,6 +219,28 @@ impl AddrSpace {
             elf.header.pt2.entry_point() as usize,
         )
     }
+
+    pub fn translate_vpn(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
+        self.root_table.translate_vpn(vpn)
+    }
+
+    pub fn from_existed_user(user_space: &AddrSpace) -> AddrSpace {
+        let mut space = Self::new_empty();
+        space.map_trampoline();
+        // copy data sections/trap_context/user_stack
+        for area in user_space.areas.iter() {
+            let new_area = MapArea::from_another(area);
+            space.push(new_area, None);
+            // copy data from another space
+            for vpn in area.range.iter() {
+                let src_ppn = user_space.translate_vpn(vpn).unwrap().ppn();
+                let dst_ppn = space.translate_vpn(vpn).unwrap().ppn();
+                dst_ppn.get_bytes_array().copy_from_slice(src_ppn.get_bytes_array());
+            }
+        }
+        space
+    }
+
 }
 
 pub struct MapArea {
@@ -231,6 +266,15 @@ impl MapArea {
             frame_map: BTreeMap::new(),
             map_type,
             perm
+        }
+    }
+
+    pub fn from_another(another: &MapArea) -> Self {
+        Self {
+            range: Range::new(another.range.start, another.range.end),
+            frame_map: BTreeMap::new(),
+            map_type: another.map_type,
+            perm: another.perm,
         }
     }
 

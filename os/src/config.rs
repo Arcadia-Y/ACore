@@ -15,8 +15,3 @@ pub const TRAP_CONTEXT : usize = TRAMPOLINE_ADDR - PAGE_SIZE;
 pub const USER_STACK_SIZE : usize = 4096 * 2;
 pub const KERNEL_STACK_SIZE : usize = 4096 * 2;
 
-pub fn kernel_stack_pos(app_id: usize) -> (usize, usize) {
-    let top = TRAMPOLINE_ADDR - app_id * (KERNEL_STACK_SIZE + PAGE_SIZE); // guard page
-    let bottom = top - KERNEL_STACK_SIZE;
-    (bottom, top)
-}

@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+allocator = { path = "../allocator" }
+spin = { path = "../spin" }
 
 [profile.release]
 debug = true

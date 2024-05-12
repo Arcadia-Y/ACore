@@ -5,7 +5,7 @@
 #[macro_use]
 pub mod console;
 mod lang_items;
-mod syscall;
+pub mod syscall;
 
 #[no_mangle]
 #[link_section = ".text.entry"]
@@ -30,4 +30,15 @@ pub fn exit(exit_code: i32) -> isize {
 }
 pub fn yield_() -> isize {
     sys_yield()
+}
+
+pub fn wait(exit_code: &mut i32) -> isize {
+    loop {
+        match waitpid(-1, exit_code as *mut _) {
+            -2 => {
+                yield_();
+            }
+            exit_pid => return exit_pid,
+        }
+    }
 }

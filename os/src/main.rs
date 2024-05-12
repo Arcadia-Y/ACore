@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(panic_info_message)]
+#![feature(vec_into_raw_parts)]
 
 mod lang_items;
 mod config;
@@ -12,6 +13,7 @@ mod trap;
 mod task;
 mod loader;
 mod syscall;
+mod ipc;
 
 extern crate alloc;
 
@@ -22,7 +24,8 @@ use drivers::uart::UART;
 use riscv::register::*;
 use time::init_timer;
 use crate::mm::address_space::set_up_page_table;
-use crate::task::run_first_task;
+use crate::task::processor::run_tasks;
+use crate::task::{add_init, add_service};
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
@@ -66,7 +69,9 @@ extern "C" fn rust_main() -> !{
     set_up_page_table();
     println!("Kernel page table set up.");
 
-    run_first_task();
+    add_service();
+    add_init();
+    run_tasks();
     unreachable!()
 }
 

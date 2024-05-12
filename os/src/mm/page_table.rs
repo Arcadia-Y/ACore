@@ -131,7 +131,7 @@ impl PageTable {
             .map(|pte| {pte.clone()})
     }
 
-    pub fn traslate_va(&self, va: VirtAddr) -> Option<PhysAddr> {
+    pub fn translate_va(&self, va: VirtAddr) -> Option<PhysAddr> {
         if let Some(pte) = self.translate_vpn(va.floor()) {
             if !pte.is_valid() {
                 return None;
@@ -163,4 +163,33 @@ pub fn get_user_byte_buffer(satp: usize, ptr: *const u8, len: usize) -> Vec<u8> 
         start += amount;
     }
     res
+}
+
+pub fn copy_bytes_to_user(satp: usize, src: *const u8, dst: usize, len: usize) {
+    let mut start = dst;
+    let end = start + len;
+    let page_table = PageTable::from_satp(satp);
+    let mut src_ptr = src;
+    while start < end {
+        let strat_va = VirtAddr(start);
+        let vpn = strat_va.floor();
+        let ppn = page_table.translate_vpn(vpn).unwrap().ppn();
+        let offset = strat_va.offset();
+        let amount = min(end - start, PAGE_SIZE - offset);
+        let bytes = ppn.get_bytes_array();
+        for i in 0..amount {
+            bytes[offset + i] = unsafe { *src_ptr.add(i) };
+        }
+        start += amount;
+        src_ptr = unsafe { src_ptr.add(amount) };
+    }
+}
+
+pub fn translate_refmut<T>(satp: usize, ptr: *mut T) -> &'static mut T {
+    let page_table = PageTable::from_satp(satp);
+    let va = ptr as usize;
+    page_table
+        .translate_va(VirtAddr(va))
+        .unwrap()
+        .get_mut()
 }
