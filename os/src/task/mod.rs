@@ -41,6 +41,11 @@ pub fn fetch_task() -> Option<Arc<TaskControlBlock>> {
 pub fn id2task(id: usize) -> Option<Arc<TaskControlBlock>> {
     SCHEDULER.lock().id2task(id)
 }
+
+pub fn recycle_id(id: usize) {
+    SCHEDULER.lock().recycle_id(id);
+}
+
 #[allow(unused)]
 // only for debug
 pub fn show_task_frames() {

@@ -1,5 +1,5 @@
 use alloc::{string::String, vec};
-use crate::{ipc::rpc::RPC_BUFFER, loader::get_app_data_by_name, mm::page_table::{get_user_byte_buffer, translate_refmut}, println, task::{add_task, exit_current_and_run_next, processor::{current_task, current_user_satp}, rpc_call, show_task_frames, suspend_current_and_run_next}};
+use crate::{ipc::rpc::RPC_BUFFER, loader::get_app_data_by_name, mm::page_table::{get_user_byte_buffer, translate_refmut}, println, task::{add_task, exit_current_and_run_next, processor::{current_task, current_user_satp, take_current_task}, recycle_id, rpc_call, show_task_frames, suspend_current_and_run_next}};
 use super::id::*;
 
 const PROCESS_MANAGER_ID: usize = 1;
@@ -7,6 +7,7 @@ const PROCESS_MANAGER_ID: usize = 1;
 pub fn sys_exit(exit_code: i32) -> ! {
     let task = current_task().unwrap();
     let id = task.taskid.0;
+    drop(task);
     rpc_call(PROCESS_MANAGER_ID, vec![SYSCALL_EXIT,id, exit_code as usize]);
     exit_current_and_run_next();
     panic!("Unreachable in sys_exit!");
@@ -53,6 +54,7 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
         let satp = current_user_satp();
         let exit_code = translate_refmut(satp, exit_code_ptr);
         *exit_code = rpc.data[1] as i32;
+        recycle_id(ret as usize);
     }
     ret
 }

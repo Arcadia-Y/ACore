@@ -4,8 +4,7 @@
 use allocator::buddy_allocator::BuddyAllocator;
 extern crate user_lib;
 
-use buddy_system_allocator::LockedHeap;
-use user_lib::{println, syscall::*};
+use user_lib::syscall::*;
 
 const HEAP_SIZE: usize = 0x80_000;
 const HEAP_UNIT: usize = 6;

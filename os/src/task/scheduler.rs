@@ -32,7 +32,7 @@ impl Scheduler {
     }
 
     pub fn push_task(&mut self, task: Arc<TaskControlBlock>) {
-        self.queue[task.priority as usize].push_back(task.clone());
+        self.queue[task.priority as usize].push_back(task);
     }
 
     pub fn fetch_task(&mut self) -> Option<Arc<TaskControlBlock>> {
@@ -53,6 +53,10 @@ impl Scheduler {
 
     pub fn id2task(&self, id: usize) -> Option<Arc<TaskControlBlock>> {
         self.id2task.get(&id).cloned()
+    }
+
+    pub fn recycle_id(&mut self, id: usize) {
+        self.id2task.remove(&id);
     }
 
     pub fn show_task_frames(&self) {

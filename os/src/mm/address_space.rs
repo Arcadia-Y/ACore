@@ -60,7 +60,7 @@ impl AddrSpace {
         area.map(table);
         
         if let Some(data) = data {
-            area.copy_from_bytes(data, table);
+            area.copy_from_bytes(data);
         }
         //println!("BEFORE");
         //show_task_frames();
@@ -315,27 +315,30 @@ impl MapArea {
         }
     }
 
-    pub fn copy_from_bytes(&mut self, data: &[u8], page_table: &mut PageTable) {
-        assert_eq!(self.map_type, MapType::Framed);
-        let mut start: usize = 0;
-        let mut current_vpn = self.range.start;
+    pub fn copy_from_bytes(&mut self, data: &[u8]) {
+        let mut head = 0;
         let len = data.len();
-        loop {
-            if current_vpn >= self.range.end {
-                break;
+        if self.map_type == MapType::Identical {
+            for vpn in self.range.iter() {
+                let src = &data[head..len.min(head + PAGE_SIZE)];
+                let ppn: PhysPageNum = PhysPageNum(vpn.0);
+                let dst = &mut ppn.get_bytes_array()[..src.len()];
+                dst.copy_from_slice(src);
+                head += PAGE_SIZE;
+                if head >= len {
+                    break;
+                }
             }
-            let src = &data[start..len.min(start + PAGE_SIZE)];
-            let dst = &mut page_table
-                .translate_vpn(current_vpn)
-                .unwrap()
-                .ppn()
-                .get_bytes_array()[..src.len()];
-            dst.copy_from_slice(src);
-            start += PAGE_SIZE;
-            if start >= len {
-                break;
+        } else {
+            for frame in self.frame_map.values() {
+                let src = &data[head..len.min(head + PAGE_SIZE)];
+                let dst = &mut frame.ppn.get_bytes_array()[..src.len()];
+                dst.copy_from_slice(src);
+                head += PAGE_SIZE;
+                if head >= len {
+                    break;
+                }
             }
-            current_vpn.0 += 1;
         }
     }
 

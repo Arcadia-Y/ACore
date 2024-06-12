@@ -1,5 +1,4 @@
 use allocator::buddy_allocator::BuddyAllocator;
-use linked_list_allocator::LockedHeap;
 
 const KERNEL_HEAP_SIZE: usize = 0x800_000;
 const KERNEL_HEAP_UNIT: usize = 8;
