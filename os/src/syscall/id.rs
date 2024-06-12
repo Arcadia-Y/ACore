@@ -7,3 +7,5 @@ pub const SYSCALL_FORK: usize = 6;
 pub const SYSCALL_EXEC: usize = 7;
 pub const SYSCALL_WAITPID: usize = 8;
 pub const SYSCALL_READ: usize = 9;
+pub const SYSCALL_GETPID: usize = 10;
+pub const SYSCALL_GETTIME: usize = 11;

@@ -56,3 +56,10 @@ pub fn waitpid(pid: isize, exit_code: &mut i32) -> isize {
         }
     }
 }
+
+pub fn sleep(time_ms: usize) {
+    let start = get_time();
+    while get_time() < start + time_ms as isize {
+        sys_yield();
+    }
+}

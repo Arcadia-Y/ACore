@@ -19,6 +19,10 @@ pub fn sys_yield() -> isize {
     0
 }
 
+pub fn sys_getpid() -> isize {
+    current_task().unwrap().taskid.0 as isize
+}
+
 pub fn sys_fork() -> isize {
     let current_task = current_task().unwrap();
     let new_task = current_task.fork();

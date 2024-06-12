@@ -6,6 +6,7 @@ use id::*;
 use fs::*;
 use proc::*;
 use rpc::*;
+use crate::{config::CLOCK_FREQ, time::get_time};
 
 pub fn syscall(id: usize, args: [usize; 4]) -> isize {
     match id {
@@ -18,6 +19,8 @@ pub fn syscall(id: usize, args: [usize; 4]) -> isize {
         SYSCALL_EXEC => sys_exec(args[0] as *const u8, args[1]),
         SYSCALL_WAITPID => sys_waitpid(args[0] as isize, args[1] as *mut i32),
         SYSCALL_READ => sys_read(args[0], args[1] as *mut u8, args[2]),
+        SYSCALL_GETPID => sys_getpid(),
+        SYSCALL_GETTIME => (get_time() / (CLOCK_FREQ / 1000)) as isize,
         _ => {
             panic!("Unsupported syscall id: {}", id);
         }

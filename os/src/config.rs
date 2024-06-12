@@ -8,6 +8,7 @@ pub const VIRT_TEST: usize = 0x100000;
 
 pub const MTIME: usize = 0x0200bff8;
 pub const MTIMECMP: usize = 0x02004000;
+pub const CLOCK_FREQ: usize = 12500000;
 pub const TIME_INTERVAL : usize = 1000000;
 
 pub const TRAMPOLINE_ADDR : usize = usize::MAX - PAGE_SIZE + 1;

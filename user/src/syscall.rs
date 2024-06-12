@@ -7,6 +7,8 @@ pub const SYSCALL_FORK: usize = 6;
 pub const SYSCALL_EXEC: usize = 7;
 pub const SYSCALL_WAITPID: usize = 8;
 pub const SYSCALL_READ: usize = 9;
+pub const SYSCALL_GETPID: usize = 10;
+pub const SYSCALL_GETTIME: usize = 11;
 
 use core::arch::asm;
 
@@ -59,4 +61,12 @@ pub fn sys_waitpid(pid: isize,  exit_code: *mut i32) -> isize {
 
 pub fn sys_read(fd: usize, buffer: &mut [u8]) -> isize {
     syscall(SYSCALL_READ, [fd, buffer.as_ptr() as usize, buffer.len(), 0])
+}
+
+pub fn getpid() -> isize {
+    syscall(SYSCALL_GETPID, [0, 0, 0, 0])
+}
+
+pub fn get_time() -> isize {
+    syscall(SYSCALL_GETTIME, [0, 0, 0, 0])
 }
