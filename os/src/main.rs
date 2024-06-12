@@ -42,7 +42,6 @@ pub unsafe fn rust_start() -> ! {
     // enable interrupts
     asm!("csrw medeleg, {ones}", ones = in(reg) !0);
     asm!("csrw mideleg, {ones}", ones = in(reg) !0);
-    sie::set_uext();
     sie::set_stimer();
     sie::set_usoft();
 

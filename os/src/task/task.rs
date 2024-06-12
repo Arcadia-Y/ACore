@@ -1,10 +1,8 @@
-use core::ops::Add;
-
 use alloc::sync::Arc;
 use riscv::register::sstatus;
 use spin::SpinLock;
 
-use crate::{mm::{address::{PhysPageNum, VirtAddr}, address_space::{AddrSpace, KERNEL_SPACE}}, trap::{self, context::TrapContext, trap_handler, trap_return}};
+use crate::{mm::{address::{PhysPageNum, VirtAddr}, address_space::{AddrSpace, KERNEL_SPACE}}, trap::{context::TrapContext, trap_handler, trap_return}};
 use super::{context::TaskContext, id::{alloc_task_id, IdTracker, KernelStack}, scheduler::Priority};
 use crate::config::*;
 

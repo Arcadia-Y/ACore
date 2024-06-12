@@ -41,6 +41,11 @@ pub fn fetch_task() -> Option<Arc<TaskControlBlock>> {
 pub fn id2task(id: usize) -> Option<Arc<TaskControlBlock>> {
     SCHEDULER.lock().id2task(id)
 }
+#[allow(unused)]
+// only for debug
+pub fn show_task_frames() {
+    SCHEDULER.lock().show_task_frames();
+}
 
 pub fn rpc_call(calleeid: usize, args: Vec<usize>) {
     let mut rpc = RPC_BUFFER.lock();

@@ -1,7 +1,7 @@
 use core::arch::{asm, global_asm};
 
 use riscv::register::{scause::{self, Exception, Interrupt, Trap}, stval, stvec, utvec::TrapMode};
-use crate::{config::{TRAMPOLINE_ADDR, TRAP_CONTEXT}, ipc::rpc::RPC_BUFFER, syscall::syscall, task::{processor::{current_trap_cx, current_user_satp}, suspend_current_and_run_next}, time::{get_mtime_cmp, get_time}};
+use crate::{config::{TRAMPOLINE_ADDR, TRAP_CONTEXT}, ipc::rpc::RPC_BUFFER, syscall::syscall, task::{processor::{current_trap_cx, current_user_satp}, show_task_frames, suspend_current_and_run_next}, time::{get_mtime_cmp, get_time}};
 pub mod context;
 
 global_asm!(include_str!("trap.S"));
@@ -71,5 +71,21 @@ pub fn trap_return() -> ! {
 
 #[no_mangle]
 pub fn trap_from_kernel() -> ! {
-    panic!("trap from kernel!")
+    let scause = scause::read();
+    let stval = stval::read();
+    match scause.cause() {
+        Trap::Exception(Exception::UserEnvCall) => {
+            panic!("user_env_call!");
+        }
+        Trap::Interrupt(Interrupt::SupervisorTimer) => {
+            panic!("timer!");
+        }
+        _ => {
+            panic!(
+                "Unsupported trap {:?}, stval = {:#x}!",
+                scause.cause(),
+                stval
+            );
+        }
+    }
 }

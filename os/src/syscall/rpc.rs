@@ -2,7 +2,7 @@ use core::cmp::min;
 
 use alloc::vec::Vec;
 
-use crate::{ipc::rpc::RPC_BUFFER, mm::page_table::{copy_bytes_to_user, get_user_byte_buffer}, task::{block_current_and_run_next, processor::current_user_satp}};
+use crate::{ipc::rpc::RPC_BUFFER, mm::page_table::{copy_bytes_to_user, get_user_byte_buffer}, println, task::{block_current_and_run_next, processor::current_user_satp}};
 
 // receive len * usize at ptr
 pub fn sys_recv(ptr: usize, len: usize) -> isize {
@@ -22,7 +22,7 @@ pub fn sys_sendrecv(send: usize, send_len: usize, recv: usize, recv_len: usize) 
     let mut rpc = RPC_BUFFER.lock();
     rpc.callee = None;
     unsafe {
-        rpc.data = Vec::from_raw_parts(ptr as *mut usize, len*8, capa*8);
+        rpc.data = Vec::from_raw_parts(ptr as *mut usize, len/8, capa/8);
     }
     drop(rpc);
     block_current_and_run_next();

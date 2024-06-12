@@ -6,6 +6,7 @@ pub const SYSCALL_SENDRECV: usize = 5;
 pub const SYSCALL_FORK: usize = 6;
 pub const SYSCALL_EXEC: usize = 7;
 pub const SYSCALL_WAITPID: usize = 8;
+pub const SYSCALL_READ: usize = 9;
 
 use core::arch::asm;
 
@@ -52,6 +53,10 @@ pub fn exec(path: &str) -> isize {
     syscall(SYSCALL_EXEC, [path.as_ptr() as usize, path.len(), 0, 0])
 }
 
-pub fn waitpid(pid: isize,  exit_code: *mut i32) -> isize {
+pub fn sys_waitpid(pid: isize,  exit_code: *mut i32) -> isize {
     syscall(SYSCALL_WAITPID, [pid as usize, exit_code as usize, 0, 0])
+}
+
+pub fn sys_read(fd: usize, buffer: &mut [u8]) -> isize {
+    syscall(SYSCALL_READ, [fd, buffer.as_ptr() as usize, buffer.len(), 0])
 }

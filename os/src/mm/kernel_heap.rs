@@ -1,4 +1,5 @@
 use allocator::buddy_allocator::BuddyAllocator;
+use linked_list_allocator::LockedHeap;
 
 const KERNEL_HEAP_SIZE: usize = 0x800_000;
 const KERNEL_HEAP_UNIT: usize = 8;
@@ -11,8 +12,10 @@ static mut KERNEL_HEAP_ALLOCATOR: BuddyAllocator = BuddyAllocator::empty(KERNEL_
 
 pub fn init_kernel_heap() {
     unsafe {
-        let start = KERNEL_HEAP_SPACE.as_ptr() as usize;
-        let end = start + KERNEL_HEAP_SIZE;
-        KERNEL_HEAP_ALLOCATOR.add_space(start, end);
+        let begin = KERNEL_HEAP_SPACE.as_ptr() as usize;
+        let end = begin + KERNEL_HEAP_SIZE;
+        KERNEL_HEAP_ALLOCATOR
+            .inner.lock()
+            .add_space(begin, end);
     }
 }

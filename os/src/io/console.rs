@@ -1,6 +1,6 @@
 use crate::drivers::uart::UART;
 use core::fmt::{self, Write};
-
+use crate::task::suspend_current_and_run_next;
 struct Stdout;
 
 impl Write for Stdout {
@@ -27,5 +27,15 @@ macro_rules! print {
 macro_rules! println {
     ($fmt: literal $(, $($arg: tt)+)?) => {
         $crate::io::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?));
+    }
+}
+
+// keep polling to get a char from UART
+pub fn getchar() -> u8 {
+    loop {
+        if let Some(c) = UART.getc() {
+            return c;
+        }
+        suspend_current_and_run_next();
     }
 }

@@ -46,7 +46,7 @@ pub struct WritePort {
     lcr: Volatile<u8>,
     mcr: Volatile<u8>,
     lsr: AtomicU8,
-    not_used: AtomicU8,
+    _not_used: AtomicU8,
     scr: AtomicU8
 }
 
@@ -77,7 +77,7 @@ impl Uart {
         thr.store(c, Ordering::Release);
     }
 
-    // read a input character.
+    // read an input character.
     // return none if no input is available.
     pub fn getc(&self) -> Option<u8> {
         let read_port = self.read_port();
@@ -100,7 +100,7 @@ impl Uart {
         write_port.lcr.write(DLAB_ENABLE);
 
         // set LSB for baud rate of 38.4K
-        write_port.thr.store(0x03, Ordering::Relaxed);
+        write_port.thr.store(0x03, Ordering::Release);
 
         // set MSB for baud rate of 38.4K
         write_port.ier.write(0x00);
@@ -110,9 +110,9 @@ impl Uart {
         write_port.lcr.write(LCR_EIGHT_BITS);
 
         // reset and enable FIFO
-        write_port.fcr.write(FCR_FIFO_ENABLE | FCR_FIFO_CLEAR);
+        write_port.fcr.write(FCR_FIFO_ENABLE | 0b11 << 6);
 
         // enable transmit and receive interrupts
-        write_port.ier.write(IER_TX_ENABLE | IER_RX_ENABLE);
+        // write_port.ier.write(IER_TX_ENABLE | IER_RX_ENABLE);
     }
 }

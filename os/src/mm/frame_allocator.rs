@@ -11,7 +11,7 @@ pub trait FrameAllocator {
 }
 
 // bind PhysPageNum with FrameTracker for RAII
-pub struct FrameTracker {
+pub struct  FrameTracker {
     pub ppn: PhysPageNum,
 }
 

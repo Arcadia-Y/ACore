@@ -3,9 +3,9 @@ use core::arch::asm;
 use alloc::{collections::BTreeMap, vec::Vec};
 use lazy_static::*;
 use spin::SpinLock;
-use crate::{config::*, println};
+use crate::{config::*, println, task::show_task_frames};
 
-use super::{address::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum}, frame_allocator::{frame_alloc, FrameTracker}, page_table::{PTEFlags, PageTable, PageTableEntry}, range::Range};
+use super::{address::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum}, frame_allocator::{frame_alloc, FrameTracker}, page_table::{self, PTEFlags, PageTable, PageTableEntry}, range::Range};
 
 extern "C" {
     fn stext();
@@ -28,7 +28,6 @@ pub fn set_up_page_table() {
     // note that KERNEL_SPACE has been initialized due to lazy_static
     let table = &KERNEL_SPACE.lock().root_table;
     let satp = table.get_satp();
-    println!("Ready to write satp.");
     unsafe {
         riscv::register::satp::write(satp);
         asm!("sfence.vma");
@@ -57,11 +56,17 @@ impl AddrSpace {
     }
 
     pub fn push(&mut self, mut area: MapArea, data: Option<&[u8]>) {
-        area.map(&mut self.root_table);
+        let table = &mut self.root_table;
+        area.map(table);
+        
         if let Some(data) = data {
-            area.copy_from_bytes(data);
+            area.copy_from_bytes(data, table);
         }
+        //println!("BEFORE");
+        //show_task_frames();
         self.areas.push(area);
+        //println!("AFTER");
+        //show_task_frames();
     }
 
     // remove MapArea starting from start_vpn
@@ -186,7 +191,7 @@ impl AddrSpace {
                 user_space.push(
                     map_area,
                     Some(&elf.input[ph.offset() as usize..(ph.offset() + ph.file_size()) as usize]),
-                );
+                );              
             }
         }
         // map user stack
@@ -310,30 +315,27 @@ impl MapArea {
         }
     }
 
-    pub fn copy_from_bytes(&mut self, data: &[u8]) {
-        let mut head = 0;
+    pub fn copy_from_bytes(&mut self, data: &[u8], page_table: &mut PageTable) {
+        assert_eq!(self.map_type, MapType::Framed);
+        let mut start: usize = 0;
+        let mut current_vpn = self.range.start;
         let len = data.len();
-        if self.map_type == MapType::Identical {
-            for vpn in self.range.iter() {
-                let src = &data[head..len.min(head + PAGE_SIZE)];
-                let ppn: PhysPageNum = PhysPageNum(vpn.0);
-                let dst = &mut ppn.get_bytes_array()[..src.len()];
-                dst.copy_from_slice(src);
-                head += PAGE_SIZE;
-                if head >= len {
-                    break;
-                }
+        loop {
+            if current_vpn >= self.range.end {
+                break;
             }
-        } else {
-            for frame in self.frame_map.values() {
-                let src = &data[head..len.min(head + PAGE_SIZE)];
-                let dst = &mut frame.ppn.get_bytes_array()[..src.len()];
-                dst.copy_from_slice(src);
-                head += PAGE_SIZE;
-                if head >= len {
-                    break;
-                }
+            let src = &data[start..len.min(start + PAGE_SIZE)];
+            let dst = &mut page_table
+                .translate_vpn(current_vpn)
+                .unwrap()
+                .ppn()
+                .get_bytes_array()[..src.len()];
+            dst.copy_from_slice(src);
+            start += PAGE_SIZE;
+            if start >= len {
+                break;
             }
+            current_vpn.0 += 1;
         }
     }
 

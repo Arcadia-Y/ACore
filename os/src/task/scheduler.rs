@@ -4,6 +4,7 @@ use lazy_static::lazy_static;
 use spin::SpinLock;
 
 use crate::ipc::rpc::RPC_BUFFER;
+use crate::println;
 
 use super::task::TaskControlBlock;
 #[derive(Clone, Copy)]
@@ -52,6 +53,13 @@ impl Scheduler {
 
     pub fn id2task(&self, id: usize) -> Option<Arc<TaskControlBlock>> {
         self.id2task.get(&id).cloned()
+    }
+
+    pub fn show_task_frames(&self) {
+        for task in self.id2task.values() {
+            println!("task {} frames:", task.taskid.0);
+            task.inner.lock().user_space.root_table.show_frames();
+        }
     }
 }
 

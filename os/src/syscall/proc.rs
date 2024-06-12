@@ -1,5 +1,5 @@
 use alloc::{string::String, vec};
-use crate::{ipc::rpc::RPC_BUFFER, loader::get_app_data_by_name, mm::page_table::{get_user_byte_buffer, translate_refmut}, println, task::{add_task, exit_current_and_run_next, processor::{current_task, current_user_satp}, rpc_call, suspend_current_and_run_next}};
+use crate::{ipc::rpc::RPC_BUFFER, loader::get_app_data_by_name, mm::page_table::{get_user_byte_buffer, translate_refmut}, println, task::{add_task, exit_current_and_run_next, processor::{current_task, current_user_satp}, rpc_call, show_task_frames, suspend_current_and_run_next}};
 use super::id::*;
 
 const PROCESS_MANAGER_ID: usize = 1;

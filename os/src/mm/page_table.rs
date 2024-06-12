@@ -2,7 +2,7 @@ use alloc::vec:: Vec;
 use alloc::vec;
 use bitflags::*;
 use core::cmp::min;
-use crate::config::PAGE_SIZE;
+use crate::{config::PAGE_SIZE, print};
 
 use super::{address::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum}, frame_allocator::{frame_alloc, FrameTracker}};
 
@@ -192,4 +192,15 @@ pub fn translate_refmut<T>(satp: usize, ptr: *mut T) -> &'static mut T {
         .translate_va(VirtAddr(va))
         .unwrap()
         .get_mut()
+}
+
+impl PageTable {
+    #[allow(unused)]
+    // only for debug
+    pub fn show_frames(&self) {
+        for frame in self.frames.iter() {
+            print!("{} ", frame.ppn.0);
+        }
+        print!("\n");
+    }
 }

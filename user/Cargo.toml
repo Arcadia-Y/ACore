@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 allocator = { path = "../allocator" }
 spin = { path = "../spin" }
+buddy_system_allocator = "0.6"
 
 [profile.release]
 debug = true

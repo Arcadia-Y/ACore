@@ -4,7 +4,8 @@
 use allocator::buddy_allocator::BuddyAllocator;
 extern crate user_lib;
 
-use user_lib::syscall::*;
+use buddy_system_allocator::LockedHeap;
+use user_lib::{println, syscall::*};
 
 const HEAP_SIZE: usize = 0x80_000;
 const HEAP_UNIT: usize = 6;
@@ -19,7 +20,9 @@ static mut HEAP_ALLOCATOR: BuddyAllocator = BuddyAllocator::empty(HEAP_UNIT);
 fn main() -> i32 {
     unsafe {
         let heap_begin = HEAP_SPACE.as_ptr() as usize;
-        HEAP_ALLOCATOR.add_space(heap_begin, heap_begin + HEAP_SIZE);
+        HEAP_ALLOCATOR
+            .inner.lock()
+            .add_space(heap_begin, heap_begin + HEAP_SIZE);
     }
     let mut process_manager = ProcessManager::new(2);
     let mut buffer = [0usize; 3];
