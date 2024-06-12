@@ -32,6 +32,6 @@ fn fork_tree(cur: &str) {
 #[no_mangle]
 pub fn main() -> i32 {
     fork_tree("");
-    sleep(5000);
+    sleep(3000);
     0
 }

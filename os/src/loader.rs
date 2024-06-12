@@ -4,6 +4,8 @@
 /// Get the total number of applications.
 use alloc::vec::Vec;
 use lazy_static::*;
+
+use crate::println;
 ///get app number
 pub fn get_num_app() -> usize {
     extern "C" {
@@ -60,4 +62,15 @@ pub fn get_app_data_by_name(name: &str) -> Option<&'static [u8]> {
     (0..num_app)
         .find(|&i| APP_NAMES[i] == name)
         .map(get_app_data)
+}
+
+///list all apps
+pub fn list_apps() {
+    println!("/**** APPS ****");
+    for app in APP_NAMES.iter() {
+        if *app != "process_manager" {
+            println!("{}", app);
+        }
+    }
+    println!("**************/");
 }

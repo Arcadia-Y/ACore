@@ -3,7 +3,7 @@ use alloc::sync::Arc;
 use lazy_static::lazy_static;
 use spin::SpinLock;
 
-use crate::ipc::rpc::RPC_BUFFER;
+use crate::ipc::RPC_BUFFER;
 use crate::println;
 
 use super::task::TaskControlBlock;

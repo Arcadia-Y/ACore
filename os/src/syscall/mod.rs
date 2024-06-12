@@ -1,11 +1,11 @@
 pub mod id;
 mod fs;
 mod proc;
-mod rpc;
+mod ipc;
 use id::*;
 use fs::*;
 use proc::*;
-use rpc::*;
+use ipc::*;
 use crate::{config::CLOCK_FREQ, time::get_time};
 
 pub fn syscall(id: usize, args: [usize; 4]) -> isize {

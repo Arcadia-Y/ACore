@@ -2,19 +2,21 @@ use core::cmp::min;
 
 use alloc::vec::Vec;
 
-use crate::{ipc::rpc::RPC_BUFFER, mm::page_table::{copy_bytes_to_user, get_user_byte_buffer}, println, task::{block_current_and_run_next, processor::current_user_satp}};
+use crate::{ipc::RPC_BUFFER, mm::page_table::{copy_bytes_to_user, get_user_byte_buffer}, println, task::{block_current_and_run_next, processor::current_user_satp}};
 
-// receive len * usize at ptr
+// receive len * usize at ptr, return sender's pid
 pub fn sys_recv(ptr: usize, len: usize) -> isize {
-    let mut rpc = RPC_BUFFER.lock();
-    rpc.callee = None;
-    drop(rpc);
+    let mut ipc = RPC_BUFFER.lock();
+    ipc.callee = None;
+    drop(ipc);
     block_current_and_run_next();
-    let data = &RPC_BUFFER.lock().data;
+    let ipc = RPC_BUFFER.lock();
+    let data = &ipc.data;
     copy_bytes_to_user(current_user_satp(), data.as_ptr() as *const u8, ptr, min(data.len(), len)*8);
-    0
+    ipc.sender as isize
 }
 
+// only for service
 // send len * usize at send and receive len * usize at recv
 pub fn sys_sendrecv(send: usize, send_len: usize, recv: usize, recv_len: usize) -> isize {
     let tosend = get_user_byte_buffer(current_user_satp(), send as *const u8, send_len * 8);

@@ -1,6 +1,6 @@
 use alloc::{sync::Arc, vec::Vec};
 use lazy_static::lazy_static;
-use crate::{ipc::rpc::RPC_BUFFER, loader::get_app_data_by_name};
+use crate::{ipc::RPC_BUFFER, loader::get_app_data_by_name};
 use self::{context::TaskContext, processor::{current_task, schedule, take_current_task}, scheduler::SCHEDULER, task::{TaskControlBlock, TaskStatus}};
 mod context;
 pub mod task; 
@@ -58,6 +58,7 @@ pub fn rpc_call(calleeid: usize, args: Vec<usize>) {
     let caller = rpc.caller.take();
     let current = current_task().unwrap();
     // let caller be current task
+    rpc.sender = current.taskid.0;
     rpc.caller = Some(current);
     rpc.callee = id2task(calleeid);
     rpc.data = args;

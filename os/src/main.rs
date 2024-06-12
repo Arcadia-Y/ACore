@@ -70,6 +70,7 @@ extern "C" fn rust_main() -> !{
 
     add_service();
     add_init();
+    loader::list_apps();
     run_tasks();
     unreachable!()
 }
