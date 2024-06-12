@@ -8,7 +8,7 @@ pub fn sys_exit(exit_code: i32) -> ! {
     let task = current_task().unwrap();
     let id = task.taskid.0;
     drop(task);
-    rpc_call(PROCESS_MANAGER_ID, vec![SYSCALL_EXIT,id, exit_code as usize]);
+    rpc_call(PROCESS_MANAGER_ID, vec![SYSCALL_EXIT, id, exit_code as usize]);
     exit_current_and_run_next();
     panic!("Unreachable in sys_exit!");
 }
@@ -39,6 +39,9 @@ pub fn sys_exec(path: *const u8, len: usize) -> isize {
     let satp = current_user_satp();
     let name_vec = get_user_byte_buffer(satp, path, len);
     let name = String::from_utf8(name_vec).unwrap();
+    if name == "process_manager" {
+        return -1;
+    }
     if let Some(data) = get_app_data_by_name(name.as_str()) {
         let task = current_task().unwrap();
         task.exec(data);

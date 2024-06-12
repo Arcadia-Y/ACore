@@ -1,7 +1,7 @@
 use core::arch::{asm, global_asm};
 
 use riscv::register::{scause::{self, Exception, Interrupt, Trap}, stval, stvec, utvec::TrapMode};
-use crate::{config::{TRAMPOLINE_ADDR, TRAP_CONTEXT}, ipc::rpc::RPC_BUFFER, syscall::syscall, task::{processor::{current_trap_cx, current_user_satp}, show_task_frames, suspend_current_and_run_next}, time::{get_mtime_cmp, get_time}};
+use crate::{config::{TRAMPOLINE_ADDR, TRAP_CONTEXT}, ipc::rpc::RPC_BUFFER, println, syscall::{id::SYSCALL_EXIT, syscall}, task::{processor::{current_trap_cx, current_user_satp}, show_task_frames, suspend_current_and_run_next}, time::{get_mtime_cmp, get_time}};
 pub mod context;
 
 global_asm!(include_str!("trap.S"));
@@ -37,11 +37,11 @@ pub fn trap_handler() -> ! {
             suspend_current_and_run_next();
         }
         _ => {
-            panic!(
-                "Unsupported trap {:?}, stval = {:#x}!",
+            println!(
+                "[kernel] Process killed because of {:?}",
                 scause.cause(),
-                stval
             );
+            syscall(SYSCALL_EXIT, [(-1isize) as usize, 0, 0, 0]);
         }
     }
     trap_return();
